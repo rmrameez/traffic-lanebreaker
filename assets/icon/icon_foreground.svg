@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="432" height="432" viewBox="0 0 432 432">
+  <!-- Top-down player car, kept inside the adaptive-icon safe circle (r = 132). -->
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#9e0d12"/>
+      <stop offset="0.25" stop-color="#e3181f"/>
+      <stop offset="0.75" stop-color="#e3181f"/>
+      <stop offset="1" stop-color="#9e0d12"/>
+    </linearGradient>
+  </defs>
+  <!-- speed streaks -->
+  <g fill="#ffffff" opacity="0.35">
+    <rect x="128" y="250" width="6" height="70" rx="3"/>
+    <rect x="298" y="230" width="6" height="90" rx="3"/>
+    <rect x="114" y="160" width="5" height="50" rx="2.5"/>
+    <rect x="313" y="140" width="5" height="60" rx="2.5"/>
+  </g>
+  <!-- shadow -->
+  <rect x="166" y="118" width="116" height="214" rx="34" fill="#000" opacity="0.35"/>
+  <!-- tyres -->
+  <g fill="#101010">
+    <rect x="149" y="134" width="16" height="42" rx="5"/>
+    <rect x="267" y="134" width="16" height="42" rx="5"/>
+    <rect x="149" y="256" width="16" height="42" rx="5"/>
+    <rect x="267" y="256" width="16" height="42" rx="5"/>
+  </g>
+  <!-- body -->
+  <rect x="156" y="106" width="120" height="220" rx="34" fill="url(#body)"/>
+  <!-- racing stripes -->
+  <g fill="#ffffff">
+    <rect x="200" y="106" width="10" height="220"/>
+    <rect x="222" y="106" width="10" height="220"/>
+  </g>
+  <!-- mirrors -->
+  <g fill="#b3121a">
+    <rect x="144" y="184" width="16" height="10" rx="4"/>
+    <rect x="272" y="184" width="16" height="10" rx="4"/>
+  </g>
+  <!-- glass -->
+  <g fill="#1a2230">
+    <path d="M172 192 Q216 180 260 192 L252 226 Q216 220 180 226 Z"/>
+    <path d="M180 286 Q216 290 252 286 L258 306 Q216 314 174 306 Z"/>
+  </g>
+  <!-- roof -->
+  <rect x="180" y="228" width="72" height="56" rx="10" fill="#c3151c"/>
+  <g fill="#ffffff">
+    <rect x="200" y="228" width="10" height="56"/>
+    <rect x="222" y="228" width="10" height="56"/>
+  </g>
+  <!-- lights -->
+  <g fill="#fff6bf">
+    <rect x="166" y="110" width="24" height="10" rx="4"/>
+    <rect x="242" y="110" width="24" height="10" rx="4"/>
+  </g>
+  <g fill="#5a0508">
+    <rect x="166" y="314" width="24" height="8" rx="3"/>
+    <rect x="242" y="314" width="24" height="8" rx="3"/>
+  </g>
+</svg>

@@ -229,9 +229,11 @@ layer = 10
 
 [node name="UI" type="Control" parent="HUD" unique_id=1515329915]
 layout_mode = 3
-anchors_preset = 0
-offset_right = 672.0
-offset_bottom = 1120.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
 
 [node name="PauseButton" type="Button" parent="HUD/UI" unique_id=1827606612]
@@ -287,53 +289,70 @@ label_settings = SubResource("LabelSettings_2f3dj")
 
 [node name="NearLabel" type="Label" parent="HUD/UI" unique_id=1984047986]
 unique_name_in_owner = true
-layout_mode = 0
+layout_mode = 1
+anchor_top = 1.0
+anchor_bottom = 1.0
 offset_left = 14.0
-offset_top = 1086.0
+offset_top = -34.0
 offset_right = 14.0
-offset_bottom = 1086.0
+offset_bottom = -34.0
+grow_vertical = 0
 label_settings = SubResource("LabelSettings_yq6so")
 
 [node name="BestLabel" type="Label" parent="HUD/UI" unique_id=241090777]
 unique_name_in_owner = true
-layout_mode = 0
+layout_mode = 1
+anchor_top = 1.0
+anchor_bottom = 1.0
 offset_left = 412.0
-offset_top = 1086.0
+offset_top = -34.0
 offset_right = 658.0
-offset_bottom = 1109.0
+offset_bottom = -11.0
+grow_vertical = 0
 label_settings = SubResource("LabelSettings_fv21b")
 horizontal_alignment = 2
 
 [node name="CenterLabel" type="Label" parent="HUD/UI" unique_id=361481716]
 unique_name_in_owner = true
-layout_mode = 0
-offset_top = 425.6
-offset_right = 672.0
-offset_bottom = 504.6
+layout_mode = 1
+anchor_top = 0.38
+anchor_right = 1.0
+anchor_bottom = 0.38
+offset_bottom = 79.0
+grow_horizontal = 2
 label_settings = SubResource("LabelSettings_tel4y")
 horizontal_alignment = 1
 
 [node name="Flash" type="ColorRect" parent="HUD/UI" unique_id=389311611]
 unique_name_in_owner = true
-layout_mode = 0
-offset_right = 672.0
-offset_bottom = 1120.0
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
 color = Color(1, 1, 1, 0)
 
 [node name="TitlePanel" type="ColorRect" parent="HUD/UI" unique_id=2113770890]
 unique_name_in_owner = true
 visible = false
-layout_mode = 0
-offset_right = 672.0
-offset_bottom = 1120.0
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
 color = Color(0, 0, 0, 0.62)
 
 [node name="VBox" type="VBoxContainer" parent="HUD/UI/TitlePanel" unique_id=1637631670]
-layout_mode = 0
-offset_right = 672.0
-offset_bottom = 1120.0
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
 alignment = 1
 
@@ -405,16 +424,22 @@ horizontal_alignment = 1
 [node name="GameOverPanel" type="ColorRect" parent="HUD/UI" unique_id=221272567]
 unique_name_in_owner = true
 visible = false
-layout_mode = 0
-offset_right = 672.0
-offset_bottom = 1120.0
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
 color = Color(0, 0, 0, 0.62)
 
 [node name="VBox" type="VBoxContainer" parent="HUD/UI/GameOverPanel" unique_id=827863524]
-layout_mode = 0
-offset_right = 672.0
-offset_bottom = 1120.0
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
 alignment = 1
 
@@ -458,16 +483,22 @@ horizontal_alignment = 1
 [node name="PausePanel" type="ColorRect" parent="HUD/UI" unique_id=104046262]
 unique_name_in_owner = true
 visible = false
-layout_mode = 0
-offset_right = 672.0
-offset_bottom = 1120.0
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
 color = Color(0, 0, 0, 0.62)
 
 [node name="VBox" type="VBoxContainer" parent="HUD/UI/PausePanel" unique_id=1910661516]
-layout_mode = 0
-offset_right = 672.0
-offset_bottom = 1120.0
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
 alignment = 1
 

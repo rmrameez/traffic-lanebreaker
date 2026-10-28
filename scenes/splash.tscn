@@ -1,0 +1,144 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/splash.gd" id="1_splash"]
+[ext_resource type="SystemFont" path="res://assets/fonts/hud_font.tres" id="2_font"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player.png" id="3_car"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_traffic"]
+font = ExtResource("2_font")
+font_size = 72
+font_color = Color(1, 0.35, 0.15, 1)
+outline_size = 8
+outline_color = Color(0, 0, 0, 0.85)
+
+[sub_resource type="LabelSettings" id="LabelSettings_lanebreaker"]
+font = ExtResource("2_font")
+font_size = 74
+font_color = Color(0.35, 1, 0.35, 1)
+outline_size = 8
+outline_color = Color(0, 0, 0, 0.85)
+
+[sub_resource type="LabelSettings" id="LabelSettings_loading"]
+font = ExtResource("2_font")
+font_size = 20
+font_color = Color(0.8, 0.8, 0.8, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_credit"]
+font = ExtResource("2_font")
+font_size = 26
+font_color = Color(1, 0.85, 0.2, 1)
+outline_size = 6
+outline_color = Color(0, 0, 0, 0.85)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bar_bg"]
+bg_color = Color(1, 1, 1, 0.12)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bar_fill"]
+bg_color = Color(0.35, 1, 0.35, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[node name="Splash" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_splash")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.07, 0.07, 0.09, 1)
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+alignment = 1
+
+[node name="CarHolder" type="Control" parent="VBox"]
+custom_minimum_size = Vector2(0, 170)
+layout_mode = 2
+
+[node name="Car" type="TextureRect" parent="VBox/CarHolder"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -46.0
+offset_top = 10.0
+offset_right = 46.0
+offset_bottom = 158.0
+grow_horizontal = 2
+texture = ExtResource("3_car")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Gap1" type="Control" parent="VBox"]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+
+[node name="TitleTraffic" type="Label" parent="VBox"]
+layout_mode = 2
+text = "TRAFFIC"
+label_settings = SubResource("LabelSettings_traffic")
+horizontal_alignment = 1
+
+[node name="TitleLanebreaker" type="Label" parent="VBox"]
+layout_mode = 2
+text = "LANEBREAKER"
+label_settings = SubResource("LabelSettings_lanebreaker")
+horizontal_alignment = 1
+
+[node name="Gap2" type="Control" parent="VBox"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+
+[node name="BarRow" type="CenterContainer" parent="VBox"]
+layout_mode = 2
+
+[node name="LoadBar" type="ProgressBar" parent="VBox/BarRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(360, 12)
+layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_bar_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_bar_fill")
+show_percentage = false
+
+[node name="Loading" type="Label" parent="VBox"]
+layout_mode = 2
+text = "LOADING..."
+label_settings = SubResource("LabelSettings_loading")
+horizontal_alignment = 1
+
+[node name="Credit" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -110.0
+offset_bottom = -60.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "Created by Rameez"
+label_settings = SubResource("LabelSettings_credit")
+horizontal_alignment = 1
+vertical_alignment = 1

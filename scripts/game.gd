@@ -56,6 +56,7 @@ var _state_timer := 0.0
 var _shake := 0.0
 var _touch_dir := 0.0
 var _new_record := false
+var _view_top := 0.0           # world y of the top screen edge; below 0 on tall phones
 
 var _smoke_tex: Texture2D = preload("res://assets/sprites/smoke.png")
 var _spark_tex: Texture2D = preload("res://assets/sprites/spark.png")
@@ -100,6 +101,8 @@ func _ready() -> void:
 	_setup_input()
 	_load_save()
 	_load_kinds()
+	_fit_to_screen()
+	get_viewport().size_changed.connect(_fit_to_screen)
 
 	_player.road_left = ROAD_LEFT
 	_player.road_right = ROAD_LEFT + LANE_W * LANES
@@ -164,6 +167,16 @@ func _load_kinds() -> void:
 		_kinds.append(k)
 
 
+## Phones are taller than VIEW. The extra height opens up above the road, so the
+## player keeps the same distance from the bottom edge and sees further ahead.
+func _fit_to_screen() -> void:
+	var h := get_viewport_rect().size.y
+	_view_top = VIEW.y - h
+	_camera.position = Vector2(VIEW.x * 0.5, VIEW.y - h * 0.5)
+	_road.position.y = _view_top - 24.0
+	_road.region_rect.size.y = h + 48.0
+
+
 ## The engine sample is one seamless second; make it loop.
 func _make_looping(player: AudioStreamPlayer) -> void:
 	var wav := player.stream as AudioStreamWAV
@@ -207,7 +220,7 @@ func _popup(text: String, color: Color, pos: Vector2, size := 30) -> void:
 	l.text = text
 	l.label_settings = ls
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	l.position = pos - Vector2(150, 20)
+	l.position = get_viewport().get_canvas_transform() * pos - Vector2(150, 20)
 	l.size.x = 300
 	_hud.add_child(l)
 	var tw := l.create_tween()
@@ -287,7 +300,7 @@ func _start_countdown() -> void:
 		var lane := randi() % LANES
 		if lane == START_LANE:
 			continue
-		_try_spawn_in_lane(lane, randf_range(-500.0, PLAYER_Y - 260.0), _pick_kind())
+		_try_spawn_in_lane(lane, randf_range(_view_top - 500.0, PLAYER_Y - 260.0), _pick_kind())
 
 
 func _start_race() -> void:
@@ -463,7 +476,7 @@ func _spawn_traffic(delta: float) -> void:
 	# Always leave at least two lanes open near the top of the screen.
 	var blocked := 0
 	for lane in LANES:
-		if not _lane_clear(lane, -420.0, 60.0):
+		if not _lane_clear(lane, _view_top - 420.0, _view_top + 60.0):
 			blocked += 1
 	if blocked >= LANES - 2:
 		return
@@ -472,7 +485,7 @@ func _spawn_traffic(delta: float) -> void:
 	lanes.shuffle()
 	for lane in lanes.slice(0, 3):
 		var tex_h: float = kind["textures"][0].get_height()
-		if _try_spawn_in_lane(lane, -tex_h * 0.5 - 30.0, kind):
+		if _try_spawn_in_lane(lane, _view_top - tex_h * 0.5 - 30.0, kind):
 			return
 
 
@@ -501,7 +514,7 @@ func _update_traffic(delta: float) -> void:
 		car.advance(delta, player_kmh, PX_PER_KMH)
 
 	for car in _traffic.duplicate():
-		if car.position.y > VIEW.y + 220.0 or car.position.y < -1400.0:
+		if car.position.y > VIEW.y + 220.0 or car.position.y < _view_top - 1400.0:
 			_traffic.erase(car)
 			car.queue_free()
 
