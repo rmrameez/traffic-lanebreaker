@@ -1,0 +1,26 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/traffic_car.gd" id="1_w8xan"]
+[ext_resource type="Texture2D" path="res://assets/sprites/sedan_0.png" id="2_0psgu"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_m4nak"]
+size = Vector2(32, 62)
+
+[node name="TrafficCar" type="Area2D" unique_id=643587030]
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("1_w8xan")
+
+[node name="Shadow" type="Sprite2D" parent="." unique_id=587627179]
+modulate = Color(0, 0, 0, 0.4)
+position = Vector2(4, 6)
+texture = ExtResource("2_0psgu")
+
+[node name="Sprite" type="Sprite2D" parent="." unique_id=1623091371]
+texture = ExtResource("2_0psgu")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=939054846]
+shape = SubResource("RectangleShape2D_m4nak")
+
+[node name="Blinker" type="Node2D" parent="." unique_id=595229863]
