@@ -86,4 +86,4 @@ Work in progress — more features coming.
 
 ## License
 
-No license chosen yet.
+This project is licensed under the [MIT License](LICENSE).
