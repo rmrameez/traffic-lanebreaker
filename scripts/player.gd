@@ -16,12 +16,24 @@ var size := Vector2.ZERO
 var _vel_x := 0.0
 
 @onready var _sprite: Sprite2D = $Sprite
+@onready var _shadow: Sprite2D = $Shadow
+@onready var _collision: CollisionShape2D = $CollisionShape2D
 
 
 func _ready() -> void:
-	# Body size without the mirror/padding margin baked into the sprites.
-	size = Vector2(_sprite.texture.get_width() - 8, _sprite.texture.get_height() - 2)
+	set_car(_sprite.texture)
 	area_entered.connect(_on_area_entered)
+
+
+## Swaps the car sprite (from the garage) and resizes the hitbox to match.
+func set_car(tex: Texture2D) -> void:
+	_sprite.texture = tex
+	_shadow.texture = tex
+	# Body size without the mirror/padding margin baked into the sprites.
+	size = Vector2(tex.get_width() - 8, tex.get_height() - 2)
+	var shape := RectangleShape2D.new()
+	shape.size = size - Vector2(6, 8)  # slightly forgiving
+	_collision.shape = shape
 
 
 func _physics_process(delta: float) -> void:

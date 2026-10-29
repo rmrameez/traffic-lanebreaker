@@ -1,0 +1,134 @@
+[gd_scene format=3]
+
+[ext_resource type="Theme" path="res://assets/ui/theme.tres" id="1_mhnvy"]
+[ext_resource type="Script" path="res://scripts/menu.gd" id="2_4ytvr"]
+[ext_resource type="Script" path="res://scripts/ui/road_background.gd" id="3_g3eks"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player.png" id="4_v86rl"]
+
+[node name="Menu" type="Control" unique_id=2040853749]
+layout_mode = 3
+anchors_preset = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = ExtResource("1_mhnvy")
+script = ExtResource("2_4ytvr")
+
+[node name="Background" type="Control" parent="." unique_id=2102363134]
+anchors_preset = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("3_g3eks")
+
+[node name="VBox" type="VBoxContainer" parent="." unique_id=1340886223]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+theme_override_constants/separation = 14
+alignment = 1
+
+[node name="TitleTraffic" type="Label" parent="VBox" unique_id=1034278698]
+layout_mode = 2
+theme_override_font_sizes/font_size = 70
+theme_override_colors/font_color = Color(0.98, 0.42, 0.28, 1)
+text = "TRAFFIC"
+horizontal_alignment = 1
+
+[node name="TitleLanebreaker" type="Label" parent="VBox" unique_id=58283621]
+layout_mode = 2
+theme_override_font_sizes/font_size = 70
+theme_override_colors/font_color = Color(0.99, 0.74, 0.22, 1)
+text = "LANEBREAKER"
+horizontal_alignment = 1
+
+[node name="CarHolder" type="Control" parent="VBox" unique_id=1243954754]
+custom_minimum_size = Vector2(0, 170)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="CarPreview" type="TextureRect" parent="VBox/CarHolder" unique_id=1591033401]
+unique_name_in_owner = true
+layout_mode = 0
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -60.0
+offset_top = 10.0
+offset_right = 60.0
+offset_bottom = 160.0
+mouse_filter = 2
+texture = ExtResource("4_v86rl")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CarName" type="Label" parent="VBox" unique_id=1731758578]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Red Racer"
+horizontal_alignment = 1
+
+[node name="Gap1" type="Control" parent="VBox" unique_id=50376527]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="PlayButton" type="Button" parent="VBox" unique_id=195393263]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(380, 92)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 40
+text = "PLAY"
+
+[node name="GarageButton" type="Button" parent="VBox" unique_id=369587035]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(380, 76)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_type_variation = &"SecondaryButton"
+theme_override_font_sizes/font_size = 30
+text = "GARAGE"
+
+[node name="SettingsButton" type="Button" parent="VBox" unique_id=870787752]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(380, 76)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_type_variation = &"SecondaryButton"
+theme_override_font_sizes/font_size = 30
+text = "SETTINGS"
+
+[node name="Gap2" type="Control" parent="VBox" unique_id=315246271]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="BestLabel" type="Label" parent="VBox" unique_id=320729202]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(0.99, 0.74, 0.22, 1)
+horizontal_alignment = 1
+
+[node name="MissionsPanel" type="PanelContainer" parent="VBox" unique_id=2135742927]
+custom_minimum_size = Vector2(540, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_filter = 2
+
+[node name="VBox" type="VBoxContainer" parent="VBox/MissionsPanel" unique_id=1254679775]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="MissionsTitle" type="Label" parent="VBox/MissionsPanel/VBox" unique_id=132305225]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(0.99, 0.74, 0.22, 1)
+text = "MISSIONS"
+
+[node name="MissionList" type="Label" parent="VBox/MissionsPanel/VBox" unique_id=1986778115]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 19

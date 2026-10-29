@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://csxo5q0m2tum3"
-path="res://.godot/imported/road_tile.png-e25dcbba2799d5a790ed32bdb190bb13.ctex"
+uid="uid://1eu3hkoyuc8h"
+path="res://.godot/imported/road_country.png-ac7ca1c40769753517932f7a32c92587.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/road_tile.png"
-dest_files=["res://.godot/imported/road_tile.png-e25dcbba2799d5a790ed32bdb190bb13.ctex"]
+source_file="res://assets/sprites/road_country.png"
+dest_files=["res://.godot/imported/road_country.png-ac7ca1c40769753517932f7a32c92587.ctex"]
 
 [params]
 

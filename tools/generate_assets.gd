@@ -10,7 +10,8 @@ const MIX_RATE := 22050
 
 # Road layout (must match scripts/game.gd).
 const ROAD_W := 672
-const TILE_H := 160
+const TILE_H := 320
+const MARGIN := 120   # extra roadside each side, seen when the camera zooms out
 const ROAD_LEFT := 36
 const LANE_W := 60
 const LANES := 10
@@ -43,10 +44,11 @@ func _init() -> void:
 	rng.seed = 1337
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(SPRITE_DIR))
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(AUDIO_DIR))
-	_make_road()
+	_make_roads()
 	_make_cars()
 	_make_particles()
 	_make_audio()
+	_make_music()
 	print("Traffic Lanebreaker assets generated.")
 	quit()
 
@@ -93,58 +95,178 @@ func _save_png(img: Image, file_name: String) -> void:
 
 # ---------------------------------------------------------------- road
 
-func _make_road() -> void:
-	var img := Image.create(ROAD_W, TILE_H, false, Image.FORMAT_RGBA8)
-	var road_right := ROAD_LEFT + LANE_W * LANES
-	var grass := Color(0.55, 0.75, 0.33)
-	var curb := Color(0.89, 0.86, 0.73)
-	var curb_edge := Color(0.74, 0.70, 0.57)
-	var asphalt := Color(0.36, 0.37, 0.42)
+## Scenery themes. Each produces road_<id>.png: the same road with a different roadside.
+const THEMES := {
+	"country": {"verge": Color(0.55, 0.75, 0.33), "curb": Color(0.89, 0.86, 0.73),
+		"asphalt": Color(0.36, 0.37, 0.42)},
+	"city": {"verge": Color(0.78, 0.78, 0.80), "curb": Color(0.86, 0.86, 0.88),
+		"asphalt": Color(0.33, 0.34, 0.39)},
+	"desert": {"verge": Color(0.93, 0.80, 0.55), "curb": Color(0.86, 0.68, 0.48),
+		"asphalt": Color(0.40, 0.38, 0.40)},
+	"snow": {"verge": Color(0.92, 0.95, 0.99), "curb": Color(0.80, 0.84, 0.90),
+		"asphalt": Color(0.38, 0.40, 0.46)},
+}
+
+
+func _make_roads() -> void:
+	for id in THEMES:
+		_make_road(id, THEMES[id])
+
+
+## Draws a shape three times so anything crossing the top/bottom edge wraps seamlessly.
+func _wrap_rrect(img: Image, rect: Rect2, r: float, c: Color) -> void:
+	for dy in [-TILE_H, 0, TILE_H]:
+		var moved := Rect2(rect.position + Vector2(0, dy), rect.size)
+		if moved.end.y > 0 and moved.position.y < TILE_H:
+			_rrect(img, moved, r, c)
+
+
+func _wrap_circle(img: Image, center: Vector2, radius: float, c: Color) -> void:
+	_wrap_rrect(img, Rect2(center - Vector2(radius, radius), Vector2(radius, radius) * 2.0), radius, c)
+
+
+func _make_road(id: String, theme: Dictionary) -> void:
+	var w := ROAD_W + MARGIN * 2
+	var img := Image.create(w, TILE_H, false, Image.FORMAT_RGBA8)
+	var left := MARGIN + ROAD_LEFT                  # asphalt starts here
+	var right := MARGIN + ROAD_LEFT + LANE_W * LANES
+	var verge: Color = theme["verge"]
+	var curb: Color = theme["curb"]
+	var curb_edge := curb.darkened(0.18)
+	var asphalt: Color = theme["asphalt"]
 	for y in TILE_H:
-		for x in ROAD_W:
+		for x in w:
 			var c: Color
-			if x < ROAD_LEFT - 14 or x >= road_right + 14:
-				c = grass
-				if (y / 20) % 2 == 0:
-					c = c.lightened(0.04)  # soft mowing stripes
-			elif x < ROAD_LEFT - 3 or x >= road_right + 3:
+			if x < left - 14 or x >= right + 14:
+				c = verge
+				if id == "country" and (y / 20) % 2 == 0:
+					c = c.lightened(0.04)  # mowing stripes
+				elif id == "desert":
+					c = c.darkened(0.03 * (1.0 + sin((x + y * 0.6) * 0.05)))  # dune ripples
+			elif x < left - 3 or x >= right + 3:
 				c = curb
-			elif x < ROAD_LEFT or x >= road_right:
+			elif x < left or x >= right:
 				c = curb_edge
 			else:
 				c = asphalt.lightened(rng.randf_range(-0.012, 0.012))
 			img.set_pixel(x, y, c)
 
-	# Curb joints.
 	for y in range(0, TILE_H, 40):
-		_rrect(img, Rect2(ROAD_LEFT - 14, y, 11, 1), 0, curb_edge)
-		_rrect(img, Rect2(road_right + 3, y, 11, 1), 0, curb_edge)
+		_rrect(img, Rect2(left - 14, y, 11, 1), 0, curb_edge)
+		_rrect(img, Rect2(right + 3, y, 11, 1), 0, curb_edge)
 
-	# Solid edge lines.
+	# Road markings.
 	var white := Color(0.96, 0.96, 0.96)
-	_rrect(img, Rect2(ROAD_LEFT + 4, -2, 3, TILE_H + 4), 0, white)
-	_rrect(img, Rect2(road_right - 7, -2, 3, TILE_H + 4), 0, white)
-
-	# Lane markings: double yellow between directions, rounded white dashes elsewhere.
+	_rrect(img, Rect2(left + 4, -2, 3, TILE_H + 4), 0, white)
+	_rrect(img, Rect2(right - 7, -2, 3, TILE_H + 4), 0, white)
 	for i in range(1, LANES):
-		var lx := ROAD_LEFT + LANE_W * i
+		var lx := left + LANE_W * i
 		if i == ONCOMING_LANES:
 			_rrect(img, Rect2(lx - 5, -2, 3, TILE_H + 4), 0, YELLOW)
 			_rrect(img, Rect2(lx + 2, -2, 3, TILE_H + 4), 0, YELLOW)
 		else:
-			for y in [0, 80]:
+			for y in range(0, TILE_H, 80):
 				_rrect(img, Rect2(lx - 2, y + 2, 4, 40), 2, Color(white, 0.9))
 
-	# Round bushes on the verges (kept inside the tile so it repeats cleanly).
-	for side_x in [8.0, ROAD_W - 8.0]:
-		for by in [40.0, 120.0]:
-			var cy: float = by + rng.randf_range(-6, 6)
-			_circle(img, Vector2(side_x + 1.5, cy + 2.5), 10, Color(0.2, 0.3, 0.1, 0.35))
-			_circle(img, Vector2(side_x, cy), 10, Color(0.24, 0.45, 0.20))
-			_circle(img, Vector2(side_x, cy), 8.6, Color(0.36, 0.62, 0.26))
-			_circle(img, Vector2(side_x - 2.5, cy - 2.5), 4.5, Color(0.48, 0.74, 0.32))
-	_save_png(img, "road_tile.png")
+	# Roadside decoration on both verges.
+	for side in [-1, 1]:
+		var inner: float = left - 14 if side < 0 else right + 14   # verge edge next to the curb
+		match id:
+			"country": _decorate_country(img, inner, side)
+			"city": _decorate_city(img, inner, side)
+			"desert": _decorate_desert(img, inner, side)
+			"snow": _decorate_snow(img, inner, side)
+	_save_png(img, "road_%s.png" % id)
 
+
+## x position `dist` px out from the verge edge on `side`.
+func _out(inner: float, side: int, dist: float) -> float:
+	return inner + dist * side
+
+
+func _tree(img: Image, pos: Vector2, r: float, dark: Color, mid: Color, light: Color) -> void:
+	_wrap_circle(img, pos + Vector2(3, 4), r, Color(0.1, 0.12, 0.08, 0.3))
+	_wrap_circle(img, pos, r, dark)
+	_wrap_circle(img, pos, r - 1.6, mid)
+	_wrap_circle(img, pos - Vector2(r * 0.3, r * 0.3), r * 0.45, light)
+
+
+func _decorate_country(img: Image, inner: float, side: int) -> void:
+	for y in [40.0, 120.0, 200.0, 280.0]:   # bushes along the curb
+		_tree(img, Vector2(_out(inner, side, 9), y + rng.randf_range(-6, 6)), 9,
+			Color(0.24, 0.45, 0.20), Color(0.36, 0.62, 0.26), Color(0.48, 0.74, 0.32))
+	for i in 7:   # big trees further out
+		var pos := Vector2(_out(inner, side, rng.randf_range(42, MARGIN + 6)), rng.randf_range(0, TILE_H))
+		_tree(img, pos, rng.randf_range(14, 22),
+			Color(0.20, 0.40, 0.18), Color(0.30, 0.56, 0.24), Color(0.44, 0.70, 0.30))
+	for i in 18:  # flowers
+		var pos := Vector2(_out(inner, side, rng.randf_range(20, MARGIN + 10)), rng.randf_range(0, TILE_H))
+		var petal: Color = [Color(1, 0.95, 0.6), Color(1, 0.7, 0.8), WHITE].pick_random()
+		_wrap_circle(img, pos, 2.2, petal)
+
+
+func _decorate_city(img: Image, inner: float, side: int) -> void:
+	# Pavement slabs next to the curb.
+	for y in range(0, TILE_H, 32):
+		_rrect(img, Rect2(minf(inner, _out(inner, side, 40)), y, 40, 1), 0, Color(0.68, 0.68, 0.72))
+	# Street lamps.
+	for y in [60.0, 220.0]:
+		var lamp := Vector2(_out(inner, side, 6), y)
+		_wrap_rrect(img, Rect2(lamp.x - 1.5 - (12 if side > 0 else 0), y - 1.5, 15, 3), 1.5, CHARCOAL)
+		_wrap_circle(img, Vector2(lamp.x - 12 * side, y), 4.5, OUTLINE)
+		_wrap_circle(img, Vector2(lamp.x - 12 * side, y), 3, Color(1.0, 0.95, 0.7))
+	# Rooftops of buildings beyond the pavement.
+	var roof_colors := [Color(0.55, 0.58, 0.68), Color(0.80, 0.55, 0.45), Color(0.62, 0.70, 0.78),
+		Color(0.85, 0.78, 0.60), Color(0.50, 0.50, 0.58)]
+	var by := 0.0
+	while by < TILE_H:
+		var h := rng.randf_range(50, 90)
+		h = minf(h, TILE_H - by)
+		var x0 := _out(inner, side, 46)
+		var bw := MARGIN + 10.0
+		var rect := Rect2(x0 if side > 0 else x0 - bw, by + 3, bw, h - 6)
+		var col: Color = roof_colors.pick_random()
+		_rrect(img, rect, 4, OUTLINE)
+		_rrect(img, rect.grow(-1.5), 3, col.darkened(0.15))
+		_rrect(img, rect.grow(-5), 2, col)
+		# Rooftop AC units.
+		var ac := Rect2(rect.position + Vector2(rng.randf_range(8, 40), rng.randf_range(8, maxf(9, h - 30))), Vector2(16, 12))
+		_rrect(img, ac, 2, OUTLINE)
+		_rrect(img, ac.grow(-1.2), 1.5, Color(0.85, 0.86, 0.9))
+		by += h
+
+
+func _decorate_desert(img: Image, inner: float, side: int) -> void:
+	var cactus := Color(0.35, 0.62, 0.36)
+	for i in 6:
+		var pos := Vector2(_out(inner, side, rng.randf_range(24, MARGIN)), rng.randf_range(0, TILE_H))
+		_wrap_circle(img, pos + Vector2(3, 4), 9, Color(0.5, 0.35, 0.2, 0.25))
+		# Top-down cactus: a round trunk with two arms.
+		_wrap_rrect(img, Rect2(pos.x - 13, pos.y - 3.5, 26, 7), 3.5, OUTLINE)
+		_wrap_rrect(img, Rect2(pos.x - 12, pos.y - 2.5, 24, 5), 2.5, cactus.darkened(0.1))
+		_wrap_circle(img, pos, 7.5, OUTLINE)
+		_wrap_circle(img, pos, 6.2, cactus)
+		_wrap_circle(img, pos - Vector2(2, 2), 2.5, cactus.lightened(0.25))
+	for i in 9:  # rocks
+		var pos := Vector2(_out(inner, side, rng.randf_range(10, MARGIN + 10)), rng.randf_range(0, TILE_H))
+		var r := rng.randf_range(3, 7)
+		_wrap_circle(img, pos, r, Color(0.62, 0.48, 0.36))
+		_wrap_circle(img, pos - Vector2(1, 1), r * 0.6, Color(0.74, 0.60, 0.46))
+
+
+func _decorate_snow(img: Image, inner: float, side: int) -> void:
+	for y in range(10, TILE_H, 40):   # snow banks along the curb
+		_wrap_circle(img, Vector2(_out(inner, side, 5), y + rng.randf_range(-4, 4)), 7, WHITE)
+	for i in 8:   # pine trees seen from above
+		var pos := Vector2(_out(inner, side, rng.randf_range(30, MARGIN + 4)), rng.randf_range(0, TILE_H))
+		var r := rng.randf_range(13, 19)
+		_wrap_circle(img, pos + Vector2(3, 4), r, Color(0.3, 0.35, 0.5, 0.25))
+		_wrap_circle(img, pos, r, Color(0.14, 0.34, 0.30))
+		_wrap_circle(img, pos, r * 0.75, Color(0.20, 0.45, 0.38))
+		_wrap_circle(img, pos, r * 0.45, Color(0.28, 0.55, 0.45))
+		for k in 5:  # snow caps
+			var a := TAU * k / 5.0 + rng.randf()
+			_wrap_circle(img, pos + Vector2(cos(a), sin(a)) * r * 0.6, 2.2, WHITE)
 
 # ---------------------------------------------------------------- vehicles
 
@@ -360,6 +482,7 @@ func _buffer(seconds: float) -> PackedFloat32Array:
 
 
 func _make_audio() -> void:
+	rng.seed = 4242   # own seed, so sounds stay the same when sprites change
 	# Engine: exactly 1 s of whole-Hz tones so it loops seamlessly; pitch is scaled in game.
 	var engine := _buffer(1.0)
 	var lp := 0.0
@@ -429,3 +552,84 @@ func _make_audio() -> void:
 		phase += TAU * lerpf(500.0, 1150.0, t) / MIX_RATE
 		sweep[i] = tanh(2.5 * sin(phase)) * sin(PI * t)
 	_save_wav(sweep, "speed_up.wav", 0.45)
+
+
+# ---------------------------------------------------------------- music
+
+const BPM := 128.0
+
+
+func _midi(note: float) -> float:
+	return 440.0 * pow(2.0, (note - 69.0) / 12.0)
+
+
+## Adds a decaying tone into `buf` starting at `start` seconds.
+func _tone(buf: PackedFloat32Array, start: float, length: float, freq: float, vol: float,
+		wave: String, decay: float) -> void:
+	var i0 := int(start * MIX_RATE)
+	var n := int(length * MIX_RATE)
+	var phase := 0.0
+	var lp := 0.0
+	for i in n:
+		var idx := i0 + i
+		if idx >= buf.size():
+			return
+		var t := float(i) / MIX_RATE
+		phase = fmod(phase + freq / MIX_RATE, 1.0)
+		var s := 0.0
+		match wave:
+			"saw": s = phase * 2.0 - 1.0
+			"square": s = 1.0 if phase < 0.5 else -1.0
+			_: s = sin(TAU * phase)
+		lp += (s - lp) * 0.25   # soften harsh edges
+		var env := minf(1.0, t / 0.004) * exp(-t * decay) * minf(1.0, (length - t) / 0.01)
+		buf[idx] += lp * env * vol
+
+
+func _make_music() -> void:
+	rng.seed = 2026
+	var beat := 60.0 / BPM
+	var bars := 8
+	var music := _buffer(bars * 4 * beat)
+	# A minor: Am - F - C - G, twice.
+	var chords := [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]]
+	for bar in bars:
+		var chord: Array = chords[bar % 4]
+		var t0 := bar * 4 * beat
+		for b in 4:
+			var tb := t0 + b * beat
+			# Kick on every beat.
+			var kick_n := int(0.25 * MIX_RATE)
+			for i in kick_n:
+				var idx := int(tb * MIX_RATE) + i
+				var t := float(i) / MIX_RATE
+				music[idx] += sin(TAU * (45.0 * t + 75.0 * (1.0 - exp(-t * 30.0)) / 30.0)) * exp(-t * 12.0) * 0.9
+			# Clap on beats 2 and 4.
+			if b % 2 == 1:
+				var lp := 0.0
+				for i in int(0.15 * MIX_RATE):
+					var t := float(i) / MIX_RATE
+					var n := rng.randf_range(-1, 1)
+					lp += (n - lp) * 0.6
+					music[int(tb * MIX_RATE) + i] += (n - lp) * exp(-t * 22.0) * 0.45
+			# Off-beat hi-hats.
+			var th := tb + beat * 0.5
+			var prev := 0.0
+			for i in int(0.05 * MIX_RATE):
+				var t := float(i) / MIX_RATE
+				var n := rng.randf_range(-1, 1)
+				music[int(th * MIX_RATE) + i] += (n - prev) * exp(-t * 70.0) * 0.18
+				prev = n
+			# Driving eighth-note bass on the chord root.
+			for e in 2:
+				var note: float = chord[0] - 24 + (12 if e == 1 and b % 2 == 1 else 0)
+				_tone(music, tb + e * beat * 0.5, beat * 0.45, _midi(note), 0.38, "saw", 6.0)
+		# Sixteenth-note arpeggio, one octave up.
+		for s in 16:
+			var note: float = chord[[0, 1, 2, 1][s % 4]] + 12
+			_tone(music, t0 + s * beat * 0.25, beat * 0.22, _midi(note), 0.10, "square", 14.0)
+		# Soft pad holding the chord for the bar.
+		for note in chord:
+			_tone(music, t0, 4 * beat - 0.02, _midi(note), 0.07, "saw", 0.6)
+			_tone(music, t0, 4 * beat - 0.02, _midi(note) * 1.004, 0.05, "saw", 0.6)
+	_save_wav(music, "music_loop.wav", 0.7)

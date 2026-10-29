@@ -1,0 +1,131 @@
+[gd_scene format=3]
+
+[ext_resource type="Theme" path="res://assets/ui/theme.tres" id="1_6wm04"]
+[ext_resource type="Script" path="res://scripts/settings.gd" id="2_f4mfi"]
+[ext_resource type="Script" path="res://scripts/ui/road_background.gd" id="3_es4n0"]
+
+[node name="Settings" type="Control" unique_id=1523814256]
+layout_mode = 3
+anchors_preset = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = ExtResource("1_6wm04")
+script = ExtResource("2_f4mfi")
+
+[node name="Background" type="Control" parent="." unique_id=1250494245]
+anchors_preset = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("3_es4n0")
+
+[node name="VBox" type="VBoxContainer" parent="." unique_id=2050139003]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="Title" type="Label" parent="VBox" unique_id=2039930831]
+layout_mode = 2
+theme_override_font_sizes/font_size = 60
+theme_override_colors/font_color = Color(0.99, 0.74, 0.22, 1)
+text = "SETTINGS"
+horizontal_alignment = 1
+
+[node name="OptionsPanel" type="PanelContainer" parent="VBox" unique_id=1960359087]
+custom_minimum_size = Vector2(560, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_filter = 2
+
+[node name="VBox" type="VBoxContainer" parent="VBox/OptionsPanel" unique_id=65909300]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="MusicLabel" type="Label" parent="VBox/OptionsPanel/VBox" unique_id=1932726360]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(0.99, 0.74, 0.22, 1)
+text = "MUSIC"
+
+[node name="MusicSlider" type="HSlider" parent="VBox/OptionsPanel/VBox" unique_id=931679685]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+max_value = 1.0
+step = 0.05
+
+[node name="SfxLabel" type="Label" parent="VBox/OptionsPanel/VBox" unique_id=672906263]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(0.99, 0.74, 0.22, 1)
+text = "SOUND EFFECTS"
+
+[node name="SfxSlider" type="HSlider" parent="VBox/OptionsPanel/VBox" unique_id=657979042]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+max_value = 1.0
+step = 0.05
+
+[node name="MilesToggle" type="CheckButton" parent="VBox/OptionsPanel/VBox" unique_id=2097054726]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Show miles instead of km"
+
+[node name="ShakeToggle" type="CheckButton" parent="VBox/OptionsPanel/VBox" unique_id=547785814]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Camera shake"
+
+[node name="VibrationToggle" type="CheckButton" parent="VBox/OptionsPanel/VBox" unique_id=293273842]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Vibration"
+
+[node name="StatsPanel" type="PanelContainer" parent="VBox" unique_id=1908116297]
+custom_minimum_size = Vector2(560, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_filter = 2
+
+[node name="VBox" type="VBoxContainer" parent="VBox/StatsPanel" unique_id=388521988]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="StatsTitle" type="Label" parent="VBox/StatsPanel/VBox" unique_id=786157624]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(0.99, 0.74, 0.22, 1)
+text = "STATS"
+
+[node name="StatsLabel" type="Label" parent="VBox/StatsPanel/VBox" unique_id=106349202]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 19
+
+[node name="ResetButton" type="Button" parent="VBox" unique_id=608014559]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(380, 70)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_type_variation = &"SecondaryButton"
+theme_override_font_sizes/font_size = 24
+text = "RESET PROGRESS"
+
+[node name="BackButton" type="Button" parent="VBox" unique_id=1877732784]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(380, 84)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 32
+text = "BACK"

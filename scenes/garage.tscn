@@ -1,0 +1,128 @@
+[gd_scene format=3]
+
+[ext_resource type="Theme" path="res://assets/ui/theme.tres" id="1_6thhw"]
+[ext_resource type="Script" path="res://scripts/garage.gd" id="2_3yerp"]
+[ext_resource type="Script" path="res://scripts/ui/road_background.gd" id="3_d8qye"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player.png" id="4_18b1i"]
+
+[node name="Garage" type="Control" unique_id=631789383]
+layout_mode = 3
+anchors_preset = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = ExtResource("1_6thhw")
+script = ExtResource("2_3yerp")
+
+[node name="Background" type="Control" parent="." unique_id=298721156]
+anchors_preset = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("3_d8qye")
+
+[node name="VBox" type="VBoxContainer" parent="." unique_id=173237032]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="Title" type="Label" parent="VBox" unique_id=1820089137]
+layout_mode = 2
+theme_override_font_sizes/font_size = 60
+theme_override_colors/font_color = Color(0.99, 0.74, 0.22, 1)
+text = "GARAGE"
+horizontal_alignment = 1
+
+[node name="Counter" type="Label" parent="VBox" unique_id=989478433]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "1 / 8"
+horizontal_alignment = 1
+
+[node name="Row" type="HBoxContainer" parent="VBox" unique_id=729922938]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 22
+alignment = 1
+
+[node name="PrevButton" type="Button" parent="VBox/Row" unique_id=1994570970]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(84, 84)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_type_variation = &"SecondaryButton"
+theme_override_font_sizes/font_size = 40
+text = "<"
+
+[node name="PreviewFrame" type="PanelContainer" parent="VBox/Row" unique_id=322848414]
+custom_minimum_size = Vector2(260, 340)
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_filter = 2
+
+[node name="Preview" type="TextureRect" parent="VBox/Row/PreviewFrame" unique_id=720180150]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(120, 290)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("4_18b1i")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="NextButton" type="Button" parent="VBox/Row" unique_id=632892542]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(84, 84)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_type_variation = &"SecondaryButton"
+theme_override_font_sizes/font_size = 40
+text = ">"
+
+[node name="CarName" type="Label" parent="VBox" unique_id=530725292]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 42
+text = "Red Racer"
+horizontal_alignment = 1
+
+[node name="Status" type="Label" parent="VBox" unique_id=129158839]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(0.99, 0.74, 0.22, 1)
+horizontal_alignment = 1
+
+[node name="UnlockProgress" type="ProgressBar" parent="VBox" unique_id=604157890]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(380, 18)
+layout_mode = 2
+size_flags_horizontal = 4
+show_percentage = false
+
+[node name="Gap" type="Control" parent="VBox" unique_id=718711099]
+custom_minimum_size = Vector2(0, 6)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="SelectButton" type="Button" parent="VBox" unique_id=140254291]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(380, 88)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 34
+text = "SELECT"
+
+[node name="BackButton" type="Button" parent="VBox" unique_id=2088500668]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(380, 76)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_type_variation = &"SecondaryButton"
+theme_override_font_sizes/font_size = 30
+text = "BACK"

@@ -1,17 +1,27 @@
 # Traffic Lanebreaker
 
 An endless top-down highway dodger made with **Godot 4.7**.
-Weave through traffic on a 10-lane highway, survive as long as you can, and beat your best distance.
+Weave through traffic on a 10-lane highway, take risks for a bigger score, complete missions and unlock new cars.
 
 ## Gameplay
 
-- **10-lane highway** — the 2 left lanes are oncoming traffic, the other 8 drive your way.
-- **Speed keeps climbing** — you start at 120 km/h and speed up by 15 km/h every 8 seconds, up to a 320 km/h limit.
-- **Traffic gets denser** the longer you survive. Drivers brake behind slower cars, signal, and change lanes — sometimes right into your path.
-- **Oncoming cars honk** when you're in their lane.
-- **Near misses** — pass a car closely to rack up near-miss points.
-- **Score is distance** — shown in kilometres or miles. Your best run is saved.
-- One crash and it's over: explosion, spin-out, slow motion, game over.
+- **10-lane highway**: the 2 left lanes are oncoming traffic, and the other 8 drive your way.
+- **Speed keeps climbing**: you start at 120 km/h and speed up by 15 km/h every 8 seconds, up to 320 km/h. The camera zooms out and shakes as you go faster.
+- **Traffic gets denser** the longer you survive. Drivers brake behind slower cars, signal, and change lanes, sometimes right into your path. Oncoming cars honk when you're in their lane.
+- **Risk scoring**: you score 1 point per metre, times your multiplier.
+  - Each **near miss** adds **+0.5x** and a bonus. Keep chaining them before the chain bar runs out (up to +4x).
+  - Driving in the **oncoming lanes** adds **+1x** while you're there.
+- **Missions**: 3 active missions, such as "Get 8 near misses in one run" or "Drive 0.5 km in oncoming lanes". Finished missions are replaced by harder ones.
+- **Garage**: 8 cars to unlock by playing, through best distance, total distance, near misses, missions completed or best score.
+- **Changing scenery**: every 1.5 km the roadside changes, from countryside to city to desert to snow.
+- One crash and it's over: explosion, spin-out, slow motion, then your results, completed missions and any newly unlocked cars.
+
+## Screens
+
+- **Main menu**: play, garage, settings, best score and current missions.
+- **Garage**: browse the cars, see how to unlock them, and pick the one you race.
+- **Settings**: music and sound-effect volume, km or miles, camera shake, vibration, lifetime stats, and a progress reset.
+- **In race**: score, multiplier badge with chain timer, distance, speedometer with a marker for the next speed level, and live mission progress.
 
 ## Controls
 
@@ -19,56 +29,76 @@ Weave through traffic on a 10-lane highway, survive as long as you can, and beat
 |---|---|---|
 | Steer | `A` / `D` or `←` / `→` | Hold the left / right side of the screen |
 | Brake | `S` or `↓` | — |
-| Pause | `P` or `Esc` | Pause button (top left) |
-| Start / restart | `Space` or `Enter` | Tap |
-| Switch km / miles | `U` | — |
+| Pause | `P` or `Esc` | Pause button (top left), or the Android back button |
+| Race again (after a crash) | `Space` or `Enter` | **Race Again** button |
+| Switch km / miles | `U` | Settings screen |
 
 ## Running the game
 
-1. Install [Godot 4.7](https://godotengine.org/download) (the standard or .NET edition both work — the game is pure GDScript).
+1. Install [Godot 4.7](https://godotengine.org/download). The standard and .NET editions both work, because the game is pure GDScript.
 2. Clone this repository.
 3. In Godot, click **Import** and select the `project.godot` file.
 4. Press **F5** to play.
 
-Tip: run with `-- --quick` to skip the title screen while developing.
+While developing, you can skip the splash and menu by running the race scene directly:
+
+```bash
+godot --path . res://scenes/main.tscn
+```
 
 ## Project structure
 
 ```
 assets/
-  audio/      Sound effects (engine loop, crash, horn, whoosh, beeps)
+  audio/      Music loop and sound effects
   fonts/      HUD font resource
-  sprites/    Road tile, player car, 24 traffic vehicles, particles
+  icon/       App icon layers
+  sprites/    Road tiles (4 sceneries), 24 traffic vehicles, particles
+  ui/         Button and panel theme
 scenes/
-  main.tscn         Road, player, HUD, audio and camera
+  splash.tscn       Loading screen
+  menu.tscn         Main menu
+  garage.tscn       Car selection
+  settings.tscn     Settings and stats
+  main.tscn         The race: road, player, traffic, HUD, audio and camera
   player.tscn       The player's car
   traffic_car.tscn  Template used for every traffic vehicle
 scripts/
-  game.gd           Game loop, traffic spawning, speed, scoring, HUD
-  player.gd         Player steering and crash detection
+  profile.gd        Autoload: save data, settings, garage unlocks, missions, music
+  game.gd           Race loop: traffic, speed, risk scoring, scenery, camera
+  hud.gd            In-race HUD, pause and game-over panels
+  player.gd         Player steering, car swapping and crash detection
   traffic_car.gd    Traffic movement, lane changes and blinkers
+  menu.gd, garage.gd, settings.gd, splash.gd   Screen logic
+  ui/speedometer.gd       Speedometer dial
+  ui/road_background.gd   Scrolling road behind the menus
 tools/
-  generate_assets.gd  Draws all sprites and synthesises all sounds
+  generate_assets.gd  Draws all sprites and synthesises all sounds and music
+  generate_icons.gd   Renders the app icon layers
 ```
 
-### Tuning the difficulty
+### Tuning
 
-The main settings are constants at the top of `scripts/game.gd`:
+The race settings are constants at the top of `scripts/game.gd`:
 
 | Constant | Meaning |
 |---|---|
-| `START_SPEED` | Starting speed (km/h) |
-| `MAX_SPEED` | Speed limit (km/h) |
+| `START_SPEED` / `MAX_SPEED` | Starting speed and speed limit (km/h) |
 | `SPEED_STEP` / `SPEED_STEP_TIME` | How much and how often the speed increases |
+| `CHAIN_TIME` / `CHAIN_STEP` / `CHAIN_MAX` | Near-miss chain length, multiplier per near miss, and cap |
+| `ONCOMING_BONUS` | Extra multiplier in the oncoming lanes |
+| `ZOOM_MAX_OUT` | How far the camera zooms out at top speed |
+| `SCENERY_KM` | Distance between scenery changes |
 | `LANES` / `ONCOMING_LANES` | Road layout |
-| `NEAR_MISS_GAP` | How close counts as a near miss (px) |
 | `CAR_KINDS` | Traffic types, how often they appear and their speeds |
 
-If you change the road layout, update the matching constants in `tools/generate_assets.gd` and regenerate the road tile.
+Garage cars and their unlock goals, and the mission list, are at the top of `scripts/profile.gd`.
 
-### Regenerating the art and sounds
+If you change the road layout, update the matching constants in `tools/generate_assets.gd` and regenerate the road tiles.
 
-All sprites and sounds are generated by code, so you can tweak colours, shapes or sounds and rebuild them:
+### Regenerating the art, sounds and music
+
+All sprites, sounds and the music loop are generated by code, so you can tweak colours, shapes or sounds and rebuild them:
 
 ```bash
 godot --headless --path . --script res://tools/generate_assets.gd
@@ -78,11 +108,7 @@ To use your own art or audio instead, replace the files in `assets/` and keep th
 
 ## Platforms
 
-Tested on Windows. The screen is portrait (672×1120) with touch controls, so it is ready to export to **Android**. Godot can also export to Linux, macOS, iOS and the web.
-
-## Roadmap
-
-Work in progress — more features coming.
+Tested on Windows. The game is portrait (672×1120, growing taller on tall phones) with touch controls, and has an Android export preset. Godot can also export to Linux, macOS, iOS and the web.
 
 ## License
 

@@ -2,7 +2,7 @@ extends Control
 ## Loading screen: shows the title and credit while the game scene loads in the background.
 ## Scene: res://scenes/splash.tscn (the project's main scene).
 
-const GAME_SCENE := "res://scenes/main.tscn"
+const GAME_SCENE := "res://scenes/menu.tscn"   # loads the main menu
 const MIN_TIME := 2.5   # seconds the splash stays up, even if loading is instant
 const FADE_TIME := 0.4
 
