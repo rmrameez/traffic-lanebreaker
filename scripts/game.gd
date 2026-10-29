@@ -27,11 +27,11 @@ const KM_TO_MI := 0.621371
 const SAVE_PATH := "user://traffic_lanebreaker.cfg"
 
 const CAR_KINDS := [
-	{"prefix": "sedan", "count": 6, "weight": 5.0, "speed": Vector2(60, 100)},
+	{"prefix": "sedan", "count": 8, "weight": 5.0, "speed": Vector2(60, 100)},
 	{"prefix": "hatch", "count": 4, "weight": 3.0, "speed": Vector2(55, 95)},
 	{"prefix": "sports", "count": 3, "weight": 1.5, "speed": Vector2(85, 110)},
-	{"prefix": "van", "count": 3, "weight": 2.0, "speed": Vector2(55, 85)},
-	{"prefix": "truck", "count": 2, "weight": 1.2, "speed": Vector2(45, 70)},
+	{"prefix": "van", "count": 4, "weight": 2.0, "speed": Vector2(55, 85)},
+	{"prefix": "truck", "count": 3, "weight": 1.2, "speed": Vector2(45, 70)},
 	{"prefix": "bus", "count": 2, "weight": 0.8, "speed": Vector2(45, 65)},
 ]
 
@@ -215,7 +215,7 @@ func _popup(text: String, color: Color, pos: Vector2, size := 30) -> void:
 	ls.font_size = size
 	ls.font_color = color
 	ls.outline_size = 6
-	ls.outline_color = Color(0, 0, 0, 0.85)
+	ls.outline_color = Color(0.17, 0.15, 0.24)
 	var l := Label.new()
 	l.text = text
 	l.label_settings = ls
@@ -307,7 +307,7 @@ func _start_race() -> void:
 	state = State.PLAYING
 	player_kmh = 0.0
 	target_kmh = START_SPEED
-	_flash_center("GO!", Color(0.35, 1.0, 0.35), 0.8)
+	_flash_center("GO!", Color(0.40, 0.85, 0.45), 0.8)
 	_snd_go.play()
 	_snd_engine.play()
 

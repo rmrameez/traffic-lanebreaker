@@ -16,10 +16,25 @@ const LANE_W := 60
 const LANES := 10
 const ONCOMING_LANES := 2
 
-const GLASS := Color(0.10, 0.13, 0.18)
-const HEADLIGHT := Color(1.0, 0.97, 0.75)
-const TAILLIGHT := Color(0.85, 0.08, 0.08)
-const TYRE := Color(0.06, 0.06, 0.06)
+# Toy-like palette: flat colours, dark outlines, lavender glass.
+const OUTLINE := Color(0.17, 0.15, 0.24)
+const GLASS := Color(0.72, 0.73, 0.96)
+const HEADLIGHT := Color(1.0, 0.95, 0.70)
+const TAILLIGHT := Color(0.95, 0.25, 0.25)
+const TYRE := Color(0.20, 0.19, 0.25)
+const WHITE := Color(0.95, 0.95, 0.97)
+
+const RED := Color(0.94, 0.33, 0.26)
+const ORANGE := Color(0.98, 0.52, 0.20)
+const YELLOW := Color(0.99, 0.74, 0.22)
+const GREEN := Color(0.27, 0.66, 0.36)
+const LIME := Color(0.55, 0.78, 0.30)
+const BLUE := Color(0.27, 0.40, 0.88)
+const TEAL := Color(0.20, 0.68, 0.72)
+const PINK := Color(0.93, 0.45, 0.68)
+const PURPLE := Color(0.55, 0.40, 0.85)
+const GREY := Color(0.42, 0.43, 0.50)
+const CHARCOAL := Color(0.28, 0.28, 0.34)
 
 var rng := RandomNumberGenerator.new()
 
@@ -37,37 +52,39 @@ func _init() -> void:
 
 
 # ---------------------------------------------------------------- drawing helpers
+# Shapes are drawn from signed distance fields, so every edge is anti-aliased.
 
 func _blend(img: Image, x: int, y: int, c: Color) -> void:
-	if x < 0 or y < 0 or x >= img.get_width() or y >= img.get_height():
+	if x < 0 or y < 0 or x >= img.get_width() or y >= img.get_height() or c.a <= 0.0:
 		return
 	img.set_pixel(x, y, img.get_pixel(x, y).blend(c))
 
 
-func _in_rrect(x: int, y: int, r: Rect2i, radius: float) -> bool:
-	var px := x + 0.5
-	var py := y + 0.5
-	var qx := clampf(px, r.position.x + radius, r.end.x - radius)
-	var qy := clampf(py, r.position.y + radius, r.end.y - radius)
-	return Vector2(px - qx, py - qy).length() <= radius
+## Rounded rectangle with soft edges. `r` is the corner radius.
+func _rrect(img: Image, rect: Rect2, r: float, c: Color) -> void:
+	r = clampf(r, 0.0, minf(rect.size.x, rect.size.y) * 0.5)
+	var center := rect.get_center()
+	var half := rect.size * 0.5 - Vector2(r, r)
+	for y in range(floori(rect.position.y) - 1, ceili(rect.end.y) + 1):
+		for x in range(floori(rect.position.x) - 1, ceili(rect.end.x) + 1):
+			var p := Vector2(x + 0.5, y + 0.5) - center
+			var q := Vector2(absf(p.x), absf(p.y)) - half
+			var d := Vector2(maxf(q.x, 0.0), maxf(q.y, 0.0)).length() + minf(maxf(q.x, q.y), 0.0) - r
+			var cover := clampf(0.5 - d, 0.0, 1.0)
+			if cover > 0.0:
+				_blend(img, x, y, Color(c, c.a * cover))
 
 
-## Rounded rectangle. `shade` > 0 adds a cylindrical highlight so bodies look rounded.
-func _rrect(img: Image, r: Rect2i, radius: float, c: Color, shade := 0.0) -> void:
-	var cx := r.position.x + r.size.x * 0.5
-	for y in range(r.position.y, r.end.y):
-		for x in range(r.position.x, r.end.x):
-			if not _in_rrect(x, y, r, radius):
-				continue
-			var col := c
-			if shade > 0.0:
-				var t: float = absf(x + 0.5 - cx) / (r.size.x * 0.5)
-				col = c.lightened(shade * 0.6 * (1.0 - t)).darkened(shade * t * t)
-			_blend(img, x, y, col)
+func _circle(img: Image, center: Vector2, radius: float, c: Color) -> void:
+	_rrect(img, Rect2(center - Vector2(radius, radius), Vector2(radius, radius) * 2.0), radius, c)
 
 
-func _rect(img: Image, r: Rect2i, c: Color) -> void:
-	_rrect(img, r, 0.0, c)
+## Outlined, two-tone panel: dark outline, shaded sides, flat top.
+func _panel(img: Image, rect: Rect2, r: float, c: Color, inset := 2.5) -> void:
+	_rrect(img, rect, r, OUTLINE)
+	_rrect(img, rect.grow(-1.4), r - 1.4, c.darkened(0.22))
+	_rrect(img, Rect2(rect.position.x + inset + 1.0, rect.position.y + 2.0,
+		rect.size.x - (inset + 1.0) * 2.0, rect.size.y - 4.0), r - inset, c)
 
 
 func _save_png(img: Image, file_name: String) -> void:
@@ -79,203 +96,231 @@ func _save_png(img: Image, file_name: String) -> void:
 func _make_road() -> void:
 	var img := Image.create(ROAD_W, TILE_H, false, Image.FORMAT_RGBA8)
 	var road_right := ROAD_LEFT + LANE_W * LANES
+	var grass := Color(0.55, 0.75, 0.33)
+	var curb := Color(0.89, 0.86, 0.73)
+	var curb_edge := Color(0.74, 0.70, 0.57)
+	var asphalt := Color(0.36, 0.37, 0.42)
 	for y in TILE_H:
 		for x in ROAD_W:
-			var n := rng.randf_range(-1.0, 1.0)
 			var c: Color
 			if x < ROAD_LEFT - 14 or x >= road_right + 14:
-				c = Color(0.36, 0.33, 0.20).lightened(n * 0.08)  # dry verge
+				c = grass
+				if (y / 20) % 2 == 0:
+					c = c.lightened(0.04)  # soft mowing stripes
+			elif x < ROAD_LEFT - 3 or x >= road_right + 3:
+				c = curb
 			elif x < ROAD_LEFT or x >= road_right:
-				c = Color(0.24, 0.23, 0.21).lightened(n * 0.10)  # gravel shoulder
+				c = curb_edge
 			else:
-				c = Color(0.15, 0.15, 0.16).lightened(n * 0.05)  # asphalt
-				# Worn tyre tracks in the middle of each lane.
-				var in_lane := fmod(x - ROAD_LEFT, float(LANE_W))
-				if absf(in_lane - LANE_W * 0.5 + 14) < 5 or absf(in_lane - LANE_W * 0.5 - 14) < 5:
-					c = c.darkened(0.12)
+				c = asphalt.lightened(rng.randf_range(-0.012, 0.012))
 			img.set_pixel(x, y, c)
 
-	# A few tileable asphalt patches.
-	for i in 6:
-		var px := rng.randi_range(ROAD_LEFT + 6, road_right - 30)
-		var py := rng.randi_range(0, TILE_H - 1)
-		var w := rng.randi_range(10, 26)
-		var h := rng.randi_range(8, 30)
-		for yy in h:
-			for xx in w:
-				_blend(img, px + xx, (py + yy) % TILE_H, Color(0, 0, 0, 0.08))
+	# Curb joints.
+	for y in range(0, TILE_H, 40):
+		_rrect(img, Rect2(ROAD_LEFT - 14, y, 11, 1), 0, curb_edge)
+		_rrect(img, Rect2(road_right + 3, y, 11, 1), 0, curb_edge)
 
 	# Solid edge lines.
-	for y in TILE_H:
-		for x in range(ROAD_LEFT + 2, ROAD_LEFT + 5):
-			img.set_pixel(x, y, Color(0.85, 0.85, 0.80))
-		for x in range(road_right - 5, road_right - 2):
-			img.set_pixel(x, y, Color(0.85, 0.85, 0.80))
+	var white := Color(0.96, 0.96, 0.96)
+	_rrect(img, Rect2(ROAD_LEFT + 4, -2, 3, TILE_H + 4), 0, white)
+	_rrect(img, Rect2(road_right - 7, -2, 3, TILE_H + 4), 0, white)
 
-	# Lane dividers: double yellow between directions, white dashes elsewhere.
+	# Lane markings: double yellow between directions, rounded white dashes elsewhere.
 	for i in range(1, LANES):
 		var lx := ROAD_LEFT + LANE_W * i
-		for y in TILE_H:
-			if i == ONCOMING_LANES:
-				for x in [lx - 4, lx - 3, lx - 2, lx + 2, lx + 3, lx + 4]:
-					img.set_pixel(x, y, Color(0.85, 0.68, 0.10).lightened(rng.randf() * 0.05))
-			elif y % 80 < 44:
-				for x in range(lx - 1, lx + 2):
-					img.set_pixel(x, y, Color(0.82, 0.82, 0.80, 1.0).darkened(rng.randf() * 0.12))
+		if i == ONCOMING_LANES:
+			_rrect(img, Rect2(lx - 5, -2, 3, TILE_H + 4), 0, YELLOW)
+			_rrect(img, Rect2(lx + 2, -2, 3, TILE_H + 4), 0, YELLOW)
+		else:
+			for y in [0, 80]:
+				_rrect(img, Rect2(lx - 2, y + 2, 4, 40), 2, Color(white, 0.9))
 
-	# Guard-rail posts on the verge.
-	for y in range(4, TILE_H, 32):
-		for post_x in [6, ROAD_W - 18]:
-			_rect(img, Rect2i(post_x, y, 12, 12), Color(0.30, 0.18, 0.10))
-			_rect(img, Rect2i(post_x + 1, y + 1, 10, 10), Color(0.48, 0.30, 0.18))
-			_rect(img, Rect2i(post_x + 2, y + 2, 5, 3), Color(0.62, 0.42, 0.28))
+	# Round bushes on the verges (kept inside the tile so it repeats cleanly).
+	for side_x in [8.0, ROAD_W - 8.0]:
+		for by in [40.0, 120.0]:
+			var cy: float = by + rng.randf_range(-6, 6)
+			_circle(img, Vector2(side_x + 1.5, cy + 2.5), 10, Color(0.2, 0.3, 0.1, 0.35))
+			_circle(img, Vector2(side_x, cy), 10, Color(0.24, 0.45, 0.20))
+			_circle(img, Vector2(side_x, cy), 8.6, Color(0.36, 0.62, 0.26))
+			_circle(img, Vector2(side_x - 2.5, cy - 2.5), 4.5, Color(0.48, 0.74, 0.32))
 	_save_png(img, "road_tile.png")
 
 
-# ---------------------------------------------------------------- cars
+# ---------------------------------------------------------------- vehicles
 
-## Canvas for a car of body size w x h. Leaves room for mirrors.
-func _car_canvas(w: int, h: int) -> Image:
+## Canvas for a vehicle of body size w x h. The 4 px side margin leaves room for
+## wheels and mirrors; the game subtracts it to get the body size.
+func _canvas(w: int, h: int) -> Image:
 	return Image.create(w + 8, h + 2, false, Image.FORMAT_RGBA8)
 
 
-## Generic passenger car seen from above, facing up.
-## spec: ws = windshield [y, h] fractions, roof = [y, h], rear = [y, h].
+func _wheels(img: Image, ox: float, w: float, ys: Array, length: float) -> void:
+	for wy in ys:
+		_rrect(img, Rect2(ox - 2.0, wy, 5, length), 2.2, TYRE)
+		_rrect(img, Rect2(ox + w - 3.0, wy, 5, length), 2.2, TYRE)
+
+
+func _lights(img: Image, ox: float, oy: float, w: float, h: float) -> void:
+	_rrect(img, Rect2(ox + 4, oy + 1.8, 7, 3.4), 1.7, HEADLIGHT)
+	_rrect(img, Rect2(ox + w - 11, oy + 1.8, 7, 3.4), 1.7, HEADLIGHT)
+	_rrect(img, Rect2(ox + 4, oy + h - 5.0, 7, 3.0), 1.5, TAILLIGHT)
+	_rrect(img, Rect2(ox + w - 11, oy + h - 5.0, 7, 3.0), 1.5, TAILLIGHT)
+
+
+## Passenger car seen from above, facing up.
+## spec: cab = [start, end] of the glasshouse, roof = [start, end] (fractions of h).
 func _car(w: int, h: int, color: Color, spec: Dictionary) -> Image:
-	var img := _car_canvas(w, h)
-	var ox := 4
-	var oy := 1
-	# Tyres peeking out.
-	for ty in [int(h * 0.14), int(h * 0.70)]:
-		_rect(img, Rect2i(ox - 1, oy + ty, 3, int(h * 0.16)), TYRE)
-		_rect(img, Rect2i(ox + w - 2, oy + ty, 3, int(h * 0.16)), TYRE)
+	var img := _canvas(w, h)
+	var ox := 4.0
+	var oy := 1.0
+	_wheels(img, ox, w, [oy + h * 0.13, oy + h * 0.69], h * 0.18)
 	# Mirrors.
-	var my := oy + int(h * spec.ws[0]) + 2
-	_rect(img, Rect2i(ox - 3, my, 4, 4), color.darkened(0.3))
-	_rect(img, Rect2i(ox + w - 1, my, 4, 4), color.darkened(0.3))
-	# Body.
-	_rrect(img, Rect2i(ox, oy, w, h), 7, color.darkened(0.55))
-	_rrect(img, Rect2i(ox + 1, oy + 1, w - 2, h - 2), 6, color, 0.5)
-	# Bonnet crease.
-	_rect(img, Rect2i(ox + w / 2, oy + 5, 1, int(h * spec.ws[0]) - 7), color.darkened(0.15))
-	# Glass and roof.
-	var ws := Rect2i(ox + 4, oy + int(h * spec.ws[0]), w - 8, int(h * spec.ws[1]))
-	_rrect(img, ws, 3, GLASS)
-	_rect(img, Rect2i(ws.position.x + 2, ws.position.y + 2, ws.size.x - 10, 2), Color(1, 1, 1, 0.25))
-	var roof := Rect2i(ox + 4, oy + int(h * spec.roof[0]), w - 8, int(h * spec.roof[1]))
-	_rrect(img, roof, 3, color.darkened(0.25))
-	_rrect(img, roof.grow(-1), 3, color.lightened(0.08), 0.35)
-	_rect(img, Rect2i(ox + 2, roof.position.y, 2, roof.size.y), GLASS)
-	_rect(img, Rect2i(ox + w - 4, roof.position.y, 2, roof.size.y), GLASS)
-	if spec.rear[1] > 0.0:
-		_rrect(img, Rect2i(ox + 5, oy + int(h * spec.rear[0]), w - 10, int(h * spec.rear[1])), 2, GLASS)
-	# Lights.
-	_rrect(img, Rect2i(ox + 3, oy + 1, 7, 3), 1, HEADLIGHT)
-	_rrect(img, Rect2i(ox + w - 10, oy + 1, 7, 3), 1, HEADLIGHT)
-	_rrect(img, Rect2i(ox + 3, oy + h - 4, 7, 3), 1, TAILLIGHT)
-	_rrect(img, Rect2i(ox + w - 10, oy + h - 4, 7, 3), 1, TAILLIGHT)
+	var my: float = oy + h * spec.cab[0] + 2.0
+	_rrect(img, Rect2(ox - 3.5, my, 5, 4), 1.5, OUTLINE)
+	_rrect(img, Rect2(ox + w - 1.5, my, 5, 4), 1.5, OUTLINE)
+
+	_panel(img, Rect2(ox, oy, w, h), 9, color)
+	# Bonnet highlight.
+	_rrect(img, Rect2(ox + 7, oy + 4.5, w - 14, h * spec.cab[0] - 8.0), 3, color.lightened(0.16))
+
+	var cab := Rect2(ox + 3.5, oy + h * spec.cab[0], w - 7.0, h * (spec.cab[1] - spec.cab[0]))
+	_rrect(img, cab.grow(1.2), 6, OUTLINE)
+	_rrect(img, cab, 5, GLASS)
+	_rrect(img, Rect2(cab.position.x + 3, cab.position.y + 2, cab.size.x * 0.4, 2), 1, Color(1, 1, 1, 0.7))
+	var roof_color: Color = spec.get("roof_color", color.lightened(0.10))
+	var roof := Rect2(ox + 5.5, oy + h * spec.roof[0], w - 11.0, h * (spec.roof[1] - spec.roof[0]))
+	_rrect(img, roof.grow(0.8), 4.5, roof_color.darkened(0.25))
+	_rrect(img, roof, 4, roof_color)
+
 	if spec.get("stripes", false):
-		var sc: Color = spec.get("stripe_color", Color.WHITE)
-		for sx in [w / 2 - 5, w / 2 + 2]:
-			for y in range(oy + 2, oy + h - 2):
-				var x: int = ox + sx
-				var on_glass := y >= ws.position.y and y < ws.end.y
-				if not on_glass:
-					_blend(img, x, y, sc)
-					_blend(img, x + 1, y, sc)
-					_blend(img, x + 2, y, sc)
+		var sc: Color = spec.get("stripe_color", WHITE)
+		for sx in [w * 0.5 - 6.0, w * 0.5 + 2.0]:
+			_rrect(img, Rect2(ox + sx, oy + 3, 4, cab.position.y - oy - 3.5), 1, sc)
+			_rrect(img, Rect2(ox + sx, roof.position.y, 4, roof.size.y), 1, sc)
+			_rrect(img, Rect2(ox + sx, cab.end.y + 1.5, 4, oy + h - cab.end.y - 4.0), 1, sc)
+	if spec.get("lightbar", false):
+		var lb_y := roof.get_center().y - 3.0
+		_rrect(img, Rect2(roof.position.x + 1, lb_y - 0.8, roof.size.x - 2, 7.6), 3, OUTLINE)
+		_rrect(img, Rect2(roof.position.x + 2, lb_y, roof.size.x * 0.5 - 2.5, 6), 2.5, Color(0.95, 0.25, 0.25))
+		_rrect(img, Rect2(roof.get_center().x + 0.5, lb_y, roof.size.x * 0.5 - 2.5, 6), 2.5, Color(0.3, 0.5, 1.0))
+	if spec.get("taxi_sign", false):
+		var ts := Rect2(roof.get_center().x - 7, roof.get_center().y - 3.5, 14, 7)
+		_rrect(img, ts.grow(1), 2.5, OUTLINE)
+		_rrect(img, ts, 2, Color(1.0, 0.92, 0.55))
 	if spec.get("spoiler", false):
-		_rrect(img, Rect2i(ox - 2, oy + h - 9, w + 4, 5), 2, Color(0.08, 0.08, 0.1))
+		_rrect(img, Rect2(ox - 2.5, oy + h - 10, w + 5, 6), 3, OUTLINE)
+		_rrect(img, Rect2(ox - 1.5, oy + h - 9, w + 3, 4), 2, color.darkened(0.3))
+	_lights(img, ox, oy, w, h)
 	return img
 
 
-func _make_truck(color: Color, cargo: Color) -> Image:
+## Box truck: cab up front, cargo box behind. `extra` adds a ladder or garbage lid.
+func _truck(cab_color: Color, box_color: Color, extra := "") -> Image:
 	var w := 46
 	var h := 124
-	var img := _car_canvas(w, h)
-	var ox := 4
-	var oy := 1
-	for ty in [10, 74, 92, 108]:
-		_rect(img, Rect2i(ox - 1, oy + ty, 3, 12), TYRE)
-		_rect(img, Rect2i(ox + w - 2, oy + ty, 3, 12), TYRE)
-	_rect(img, Rect2i(ox - 3, oy + 12, 4, 5), color.darkened(0.4))
-	_rect(img, Rect2i(ox + w - 1, oy + 12, 4, 5), color.darkened(0.4))
+	var img := _canvas(w, h)
+	var ox := 4.0
+	var oy := 1.0
+	_wheels(img, ox, w, [oy + 10, oy + 76, oy + 96], 14)
+	_rrect(img, Rect2(ox - 3.5, oy + 11, 5, 5), 1.5, OUTLINE)
+	_rrect(img, Rect2(ox + w - 1.5, oy + 11, 5, 5), 1.5, OUTLINE)
 	# Cab.
-	_rrect(img, Rect2i(ox + 1, oy, w - 2, 30), 6, color.darkened(0.55))
-	_rrect(img, Rect2i(ox + 2, oy + 1, w - 4, 28), 5, color, 0.5)
-	_rrect(img, Rect2i(ox + 5, oy + 7, w - 10, 8), 2, GLASS)
-	_rrect(img, Rect2i(ox + 3, oy + 1, 7, 3), 1, HEADLIGHT)
-	_rrect(img, Rect2i(ox + w - 10, oy + 1, 7, 3), 1, HEADLIGHT)
-	# Cargo box with roof ribs.
-	_rect(img, Rect2i(ox + w / 2 - 3, oy + 29, 6, 4), Color(0.1, 0.1, 0.1))
-	_rrect(img, Rect2i(ox, oy + 32, w, h - 32), 3, cargo.darkened(0.5))
-	_rrect(img, Rect2i(ox + 1, oy + 33, w - 2, h - 34), 2, cargo, 0.3)
-	for ry in range(oy + 40, oy + h - 4, 10):
-		_rect(img, Rect2i(ox + 2, ry, w - 4, 1), cargo.darkened(0.2))
-	_rect(img, Rect2i(ox + 3, oy + h - 3, 6, 2), TAILLIGHT)
-	_rect(img, Rect2i(ox + w - 9, oy + h - 3, 6, 2), TAILLIGHT)
+	_panel(img, Rect2(ox + 1, oy, w - 2, 32), 8, cab_color)
+	_rrect(img, Rect2(ox + 5, oy + 6, w - 10, 10).grow(1), 4, OUTLINE)
+	_rrect(img, Rect2(ox + 5, oy + 6, w - 10, 10), 3.5, GLASS)
+	_rrect(img, Rect2(ox + 8, oy + 8, 12, 2), 1, Color(1, 1, 1, 0.7))
+	_rrect(img, Rect2(ox + 6, oy + 19, w - 12, 9), 3, cab_color.lightened(0.12))
+	# Cargo box.
+	_rrect(img, Rect2(ox + w * 0.5 - 4, oy + 30, 8, 6), 1, OUTLINE)
+	_panel(img, Rect2(ox, oy + 34, w, h - 34), 5, box_color, 2.0)
+	match extra:
+		"ladder":
+			_rrect(img, Rect2(ox + 12, oy + 38, 4, h - 44), 1.5, Color(0.80, 0.82, 0.86))
+			_rrect(img, Rect2(ox + w - 16, oy + 38, 4, h - 44), 1.5, Color(0.80, 0.82, 0.86))
+			for ry in range(int(oy) + 42, int(oy) + h - 8, 9):
+				_rrect(img, Rect2(ox + 14, ry, w - 28, 2.5), 1, Color(0.70, 0.72, 0.78))
+		"garbage":
+			_rrect(img, Rect2(ox + 6, oy + 42, w - 12, 34), 4, box_color.lightened(0.15))
+			_rrect(img, Rect2(ox + 6, oy + 82, w - 12, 30), 4, box_color.darkened(0.12))
+		_:
+			for ry in range(int(oy) + 44, int(oy) + h - 6, 12):
+				_rrect(img, Rect2(ox + 5, ry, w - 10, 1.6), 0.8, box_color.darkened(0.12))
+	if extra == "ladder":
+		_rrect(img, Rect2(ox + 9, oy + 21, w - 18, 6), 3, OUTLINE)
+		_rrect(img, Rect2(ox + 10, oy + 22, (w - 20) * 0.5, 4), 2, Color(0.95, 0.25, 0.25))
+		_rrect(img, Rect2(ox + w * 0.5, oy + 22, (w - 20) * 0.5, 4), 2, Color(0.3, 0.5, 1.0))
+	_lights(img, ox, oy, w, h)
 	return img
 
 
-func _make_bus(color: Color) -> Image:
+func _bus(color: Color) -> Image:
 	var w := 48
 	var h := 140
-	var img := _car_canvas(w, h)
-	var ox := 4
-	var oy := 1
-	for ty in [16, 104]:
-		_rect(img, Rect2i(ox - 1, oy + ty, 3, 16), TYRE)
-		_rect(img, Rect2i(ox + w - 2, oy + ty, 3, 16), TYRE)
-	_rect(img, Rect2i(ox - 3, oy + 3, 4, 6), Color(0.1, 0.1, 0.1))
-	_rect(img, Rect2i(ox + w - 1, oy + 3, 4, 6), Color(0.1, 0.1, 0.1))
-	_rrect(img, Rect2i(ox, oy, w, h), 8, color.darkened(0.55))
-	_rrect(img, Rect2i(ox + 1, oy + 1, w - 2, h - 2), 7, color, 0.45)
-	_rrect(img, Rect2i(ox + 4, oy + 3, w - 8, 7), 2, GLASS)
-	# Side window strips and roof hatches.
-	_rect(img, Rect2i(ox + 2, oy + 16, 2, h - 26), GLASS)
-	_rect(img, Rect2i(ox + w - 4, oy + 16, 2, h - 26), GLASS)
+	var img := _canvas(w, h)
+	var ox := 4.0
+	var oy := 1.0
+	_wheels(img, ox, w, [oy + 16, oy + 104], 17)
+	_rrect(img, Rect2(ox - 3.5, oy + 4, 5, 6), 1.5, OUTLINE)
+	_rrect(img, Rect2(ox + w - 1.5, oy + 4, 5, 6), 1.5, OUTLINE)
+	_panel(img, Rect2(ox, oy, w, h), 9, color)
+	_rrect(img, Rect2(ox + 5, oy + 4, w - 10, 9).grow(1), 4, OUTLINE)
+	_rrect(img, Rect2(ox + 5, oy + 4, w - 10, 9), 3.5, GLASS)
+	# Side windows and roof.
+	_rrect(img, Rect2(ox + 2.5, oy + 18, 4, h - 30), 2, GLASS)
+	_rrect(img, Rect2(ox + w - 6.5, oy + 18, 4, h - 30), 2, GLASS)
+	_rrect(img, Rect2(ox + 8, oy + 17, w - 16, h - 28), 4, color.lightened(0.10))
 	for hy in [30, 64, 98]:
-		_rrect(img, Rect2i(ox + w / 2 - 8, oy + hy, 16, 12), 2, color.darkened(0.25))
-		_rrect(img, Rect2i(ox + w / 2 - 7, oy + hy + 1, 14, 10), 2, color.lightened(0.15))
-	_rect(img, Rect2i(ox + 3, oy + h - 4, 6, 3), TAILLIGHT)
-	_rect(img, Rect2i(ox + w - 9, oy + h - 4, 6, 3), TAILLIGHT)
+		_rrect(img, Rect2(ox + w * 0.5 - 8, oy + hy, 16, 13).grow(1), 3, OUTLINE)
+		_rrect(img, Rect2(ox + w * 0.5 - 8, oy + hy, 16, 13), 3, WHITE)
+	_lights(img, ox, oy, w, h)
 	return img
 
 
 func _make_cars() -> void:
-	var sedan := {"ws": [0.27, 0.17], "roof": [0.44, 0.28], "rear": [0.73, 0.10]}
-	var hatch := {"ws": [0.24, 0.18], "roof": [0.42, 0.40], "rear": [0.0, 0.0]}
-	var sports := {"ws": [0.36, 0.15], "roof": [0.51, 0.18], "rear": [0.70, 0.07]}
-	var van := {"ws": [0.13, 0.13], "roof": [0.26, 0.70], "rear": [0.0, 0.0]}
+	var sedan := {"cab": [0.28, 0.80], "roof": [0.43, 0.71]}
+	var hatch := {"cab": [0.25, 0.88], "roof": [0.41, 0.84]}
+	var sports := {"cab": [0.37, 0.78], "roof": [0.51, 0.70]}
+	var van := {"cab": [0.12, 0.95], "roof": [0.25, 0.93]}
 
-	var sedan_colors := [Color(0.80, 0.15, 0.15), Color(0.15, 0.30, 0.85), Color(0.90, 0.90, 0.92),
-		Color(0.60, 0.62, 0.66), Color(0.15, 0.55, 0.30), Color(0.75, 0.48, 0.28)]
+	var sedan_colors := [RED, BLUE, WHITE, GREY, GREEN, ORANGE]
 	for i in sedan_colors.size():
 		_save_png(_car(36, 68, sedan_colors[i], sedan), "sedan_%d.png" % i)
+	var taxi := sedan.duplicate()
+	taxi["taxi_sign"] = true
+	_save_png(_car(36, 68, YELLOW, taxi), "sedan_6.png")
+	var police := sedan.duplicate()
+	police["roof_color"] = WHITE
+	police["lightbar"] = true
+	_save_png(_car(36, 68, CHARCOAL, police), "sedan_7.png")
 
-	var hatch_colors := [Color(0.90, 0.30, 0.70), Color(0.20, 0.25, 0.80), Color(0.95, 0.80, 0.10), Color(0.12, 0.12, 0.14)]
+	var hatch_colors := [PINK, BLUE, YELLOW, PURPLE]
 	for i in hatch_colors.size():
 		_save_png(_car(34, 58, hatch_colors[i], hatch), "hatch_%d.png" % i)
 
-	var sports_colors := [Color(0.95, 0.45, 0.05), Color(0.10, 0.70, 0.75), Color(0.85, 0.85, 0.15)]
+	var sports_colors := [ORANGE, TEAL, LIME]
 	for i in sports_colors.size():
 		var s := sports.duplicate()
 		s["stripes"] = true
-		s["stripe_color"] = Color(0.05, 0.05, 0.05, 0.85)
+		s["stripe_color"] = Color(OUTLINE, 0.85)
 		_save_png(_car(36, 66, sports_colors[i], s), "sports_%d.png" % i)
 
-	var van_colors := [Color(0.92, 0.92, 0.94), Color(0.35, 0.40, 0.50), Color(0.55, 0.15, 0.15)]
+	var van_colors := [WHITE, BLUE, GREEN]
 	for i in van_colors.size():
 		_save_png(_car(42, 82, van_colors[i], van), "van_%d.png" % i)
+	var ambulance := van.duplicate()
+	ambulance["roof_color"] = WHITE
+	ambulance["lightbar"] = true
+	_save_png(_car(42, 82, Color(0.97, 0.97, 0.99), ambulance), "van_3.png")
 
-	_save_png(_make_truck(Color(0.20, 0.35, 0.75), Color(0.85, 0.85, 0.85)), "truck_0.png")
-	_save_png(_make_truck(Color(0.75, 0.15, 0.12), Color(0.55, 0.50, 0.42)), "truck_1.png")
-	_save_png(_make_bus(Color(0.95, 0.78, 0.08)), "bus_0.png")
-	_save_png(_make_bus(Color(0.88, 0.88, 0.90)), "bus_1.png")
+	_save_png(_truck(BLUE, WHITE), "truck_0.png")
+	_save_png(_truck(GREEN, GREEN.lightened(0.1), "garbage"), "truck_1.png")
+	_save_png(_truck(RED, RED, "ladder"), "truck_2.png")
+	_save_png(_bus(YELLOW), "bus_0.png")
+	_save_png(_bus(BLUE), "bus_1.png")
 
-	var player := {"ws": [0.33, 0.16], "roof": [0.49, 0.20], "rear": [0.69, 0.08],
-		"stripes": true, "stripe_color": Color(1, 1, 1, 0.95), "spoiler": true}
-	_save_png(_car(38, 72, Color(0.85, 0.08, 0.10), player), "player.png")
+	var player := {"cab": [0.34, 0.77], "roof": [0.49, 0.69], "stripes": true,
+		"stripe_color": WHITE, "spoiler": true}
+	_save_png(_car(38, 72, RED, player), "player.png")
 
 
 func _make_particles() -> void:

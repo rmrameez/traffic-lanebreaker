@@ -38,7 +38,7 @@ Tip: run with `-- --quick` to skip the title screen while developing.
 assets/
   audio/      Sound effects (engine loop, crash, horn, whoosh, beeps)
   fonts/      HUD font resource
-  sprites/    Road tile, player car, 20 traffic vehicles, particles
+  sprites/    Road tile, player car, 24 traffic vehicles, particles
 scenes/
   main.tscn         Road, player, HUD, audio and camera
   player.tscn       The player's car
